@@ -27,6 +27,8 @@ const {
 <script is:inline define:vars={{ sc_project, sc_security, manageConsent}}>
 (function() {
 
+    var CMP = 'cookieyes'; // cookieyes | cookiebot | auto (future)
+
     const LOG_PREFIX = 'plugin >>';
 
     const CookieYesAdapter = {
@@ -54,8 +56,6 @@ const {
     };
 
 
-var CMP = 'cookieyes'; // cookieyes | cookiebot | auto (future)
-
 const CMP_ADAPTERS = {
   cookieyes: CookieYesAdapter,
   // cookiebot: CookiebotAdapter, (later)
@@ -72,7 +72,6 @@ const CMP_ADAPTERS = {
      } else {
          adapter.setup(syncConsent);
      }
-
   } else {
     isTrackingAuthorized = true;
   }
