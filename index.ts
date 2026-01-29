@@ -1,0 +1,1 @@
+export { default as Statcounter } from './src/Statcounter.astro';
