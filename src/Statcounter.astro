@@ -29,8 +29,6 @@ const {
 
     var CMP = 'cookieyes'; // cookieyes | cookiebot | auto (future)
 
-    const LOG_PREFIX = 'plugin >>';
-
     const CookieYesAdapter = {
       setup(changeAction) {
         const handler = () => {
@@ -55,37 +53,30 @@ const {
       }
     };
 
+    const CMP_ADAPTERS = {
+        cookieyes: CookieYesAdapter,
+        // cookiebot: CookiebotAdapter, (later)
+    };
 
-const CMP_ADAPTERS = {
-  cookieyes: CookieYesAdapter,
-  // cookiebot: CookiebotAdapter, (later)
-};
 
   let isTrackingAuthorized = false;
 
   if (manageConsent === true) {
     isTrackingAuthorized = false;
-    const adapter = CMP_ADAPTERS[CMP];
-
-     if (!adapter) {
-         console.warn('[Statcounter] !adapter > Unsupported CMP :', CMP);
-     } else {
-         adapter.setup(syncConsent);
-     }
   } else {
     isTrackingAuthorized = true;
   }
 
-  console.log(LOG_PREFIX, 'Initial isTrackingAuthorized state:', isTrackingAuthorized);
+  console.log(' >>> Initial isTrackingAuthorized state:', isTrackingAuthorized);
 
   const track = () => {
-
+console.log(isTrackingAuthorized + ' : isTrackingAuthorized?')
     if (isTrackingAuthorized === false) return;
 
     const currentUrl = window.location.href;
     if (window.__sc_last_url === currentUrl) return; // Prevent duplicates
 
-    console.log(LOG_PREFIX, 'Firing Hit for:', currentUrl);
+    console.log(' >>> Firing Hit for:', currentUrl);
     window.__sc_last_url = currentUrl;
 
     // If counter.js is already loaded just fire a pageview event
@@ -113,6 +104,14 @@ const CMP_ADAPTERS = {
     }
   };
 
+  const adapter = CMP_ADAPTERS[CMP];
+
+if (!adapter) {
+  console.warn('[Statcounter] !adapter > Unsupported CMP :', CMP);
+} else {
+  adapter.setup(syncConsent);
+}
+
 function syncConsent(caller) {
     console.log('syncConsent caller : ', caller)
   const allowed = adapter.getAnalyticsConsent();
@@ -120,11 +119,11 @@ function syncConsent(caller) {
   console.log('[Statcounter] syncConsent() :', allowed);
 
   if (allowed) {
-      console.log(LOG_PREFIX, 'if (allowed) true');
+      console.log(' >>> if (allowed) true');
       isTrackingAuthorized = true;
     track();
   } else {
-      console.log(LOG_PREFIX, 'if (allowed) else > disableAnalytics()');
+      console.log(' >>> if (allowed) else > disableAnalytics()');
       isTrackingAuthorized = false;
   }
 }
@@ -132,19 +131,19 @@ function syncConsent(caller) {
 
   // Listen for SPA Navigation
   document.addEventListener('astro:page-load', () => {
-    console.log(LOG_PREFIX, 'astro:page-load triggered');
+    console.log(' >>> astro:page-load triggered');
     
     if (isTrackingAuthorized) {
-      console.log(LOG_PREFIX, 'astro:page-load > isTrackingAuthorized');
+      console.log(' >>> astro:page-load > isTrackingAuthorized');
       track();
     } else {
-      console.log(LOG_PREFIX, 'astro:page-load > SPA : isTrackingAuthorized else false.  manageConsent : false');
+      console.log(' >>> astro:page-load > SPA : isTrackingAuthorized else false.  manageConsent : false');
     }
   });
 
   // 3. Initial execution for "Simple Mode"
   if (!manageConsent) {
-    console.log(LOG_PREFIX, '(!manageConsent) > Simple Mode: Firing initial track()');
+    console.log(' >>> (!manageConsent) > Simple Mode: Firing initial track()');
     track();
   }
 
