@@ -17,16 +17,16 @@ declare global {
   }
 }
 
-const { 
+const {
   sc_project, 
-  sc_security, 
+  sc_security,
   manageConsent = false,
 } = Astro.props;
 ---
 
 <script is:inline define:vars={{ sc_project, sc_security, manageConsent}}>
-
 (function() {
+
     const LOG_PREFIX = 'plugin >>';
 
     const CookieYesAdapter = {
@@ -77,7 +77,7 @@ const CMP_ADAPTERS = {
 
     const currentUrl = window.location.href;
     if (window.__sc_last_url === currentUrl) return; // Prevent duplicates
-    
+
     console.log(LOG_PREFIX, 'Firing Hit for:', currentUrl);
     window.__sc_last_url = currentUrl;
 
@@ -89,9 +89,9 @@ const CMP_ADAPTERS = {
       return;
     }
 
-    window.sc_project = sc_project; 
+    window.sc_project = sc_project;
     window.sc_security = sc_security;
-    window.sc_invisible = 1; 
+    window.sc_invisible = 1;
     window.sc_https = 1;
 
     const oldScript = document.getElementById('statcounter-script');
@@ -106,12 +106,15 @@ const CMP_ADAPTERS = {
     }
   };
 
-  const adapter = CMP_ADAPTERS[CMP];
+if (manageConsent === true) {
 
-if (!adapter) {
-  console.warn('[Statcounter] !adapter > Unsupported CMP :', CMP);
-} else {
-  adapter.setup(syncConsent);
+    const adapter = CMP_ADAPTERS[CMP];
+
+    if (!adapter) {
+      console.warn('[Statcounter] !adapter > Unsupported CMP :', CMP);
+    } else {
+      adapter.setup(syncConsent);
+    }
 }
 
 function syncConsent(caller) {
@@ -150,5 +153,4 @@ function syncConsent(caller) {
   }
 
 })();
-
 </script>
