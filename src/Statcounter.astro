@@ -2,8 +2,8 @@
 interface Props {
   sc_project: number;
   sc_security: string;
-  manageConsent?: boolean;
-  cmp?: 'cookieyes' | 'cookiebot';
+  sc_manageConsent?: boolean;
+  sc_CMP?: 'cookieyes' | 'vanillaJOP' | 'cookiebot';
 }
 
 declare global {
@@ -18,134 +18,114 @@ declare global {
 }
 
 const {
-  sc_project, 
+  sc_project,
   sc_security,
-  manageConsent = false,
+  sc_manageConsent = false,
+  sc_CMP
 } = Astro.props;
 ---
 
-<script is:inline define:vars={{ sc_project, sc_security, manageConsent}}>
-(function() {
+<script is:inline define:vars={{ sc_project, sc_security, sc_manageConsent, sc_CMP}}>
+(function () {
+  // const sc_CMP = 'cookiebot'; // 'vanillaJOP' | 'cookieyes' | 'cookiebot'
+  console.log(sc_CMP);
+  const SIMPLE_MODE = !sc_manageConsent;
 
-    var CMP = 'cookieyes'; // cookieyes | cookiebot | auto (future)
+  let consentState = SIMPLE_MODE ? 'granted' : 'unknown';
+  let lastUrl;
 
-    const CookieYesAdapter = {
-      setup(changeAction) {
-        const handler = () => {
-            changeAction('handler');
-        };
-
-        // CookieYes events do not bubble to window , only document
-        document.addEventListener('cookieyes_consent_update', handler);
-        document.addEventListener('cookieyes_banner_load', handler);
-      },
-
-      getAnalyticsConsent(caller) {
-          console.log(caller)
-        if (typeof window.getCkyConsent !== 'function') {
-          console.warn('[CookieYesAdapter] getCkyConsent() not available yet');
-          return false;
-        }
-        const consent = window.getCkyConsent();
-        console.log('[CookieYesAdapter] getCkyConsent ready : ', consent);
-
-        return consent?.categories?.analytics === true;
-      }
-    };
-
-    const CMP_ADAPTERS = {
-        cookieyes: CookieYesAdapter,
-        // cookiebot: CookiebotAdapter, (later)
-    };
-
-
-  let isTrackingAuthorized = false;
-
-  if (manageConsent === true) {
-    isTrackingAuthorized = false;
-  } else {
-    isTrackingAuthorized = true;
+  function onConsentChange(allowed) {
+    consentState = allowed ? 'granted' : 'denied';
+    if (allowed) track();
   }
 
-  console.log(' >>> Initial isTrackingAuthorized state:', isTrackingAuthorized);
+  // ---- sc_CMP wiring (input only, no side effects) ----
 
-  const track = () => {
-console.log(isTrackingAuthorized + ' : isTrackingAuthorized?')
-    if (isTrackingAuthorized === false) return;
+  if (sc_manageConsent) {
 
-    const currentUrl = window.location.href;
-    if (window.__sc_last_url === currentUrl) return; // Prevent duplicates
+    if (sc_CMP === 'vanillaJOP') {
+      const handler = (e) => {
+        const categories =
+          e.detail?.cookie?.categories ??
+          e.detail?.categories ??
+          [];
+        onConsentChange(categories.includes('analytics'));
+      };
 
-    console.log(' >>> Firing Hit for:', currentUrl);
-    window.__sc_last_url = currentUrl;
+      window.addEventListener('cc:onChange', handler);
+      window.addEventListener('cc:onConsent', handler);
+    }
 
-    // If counter.js is already loaded just fire a pageview event
-    if (window._statcounter && typeof window._statcounter == 'function') {
-      if (window.sc_project && window.sc_security) {
-        _statcounter.record_pageview();
-      }
+    if (sc_CMP === 'cookieyes') {
+      const handler = () => {
+        if (typeof window.getCkyConsent !== 'function') return;
+        const consent = window.getCkyConsent();
+        onConsentChange(consent?.categories?.analytics === true);
+      };
+
+      document.addEventListener('cookieyes_consent_update', handler);
+      document.addEventListener('cookieyes_banner_load', handler);
+    }
+
+     if (sc_CMP === 'cookiebot') {
+      // Consent ready > read Cookiebot.consent
+      window.addEventListener('CookiebotOnConsentReady', () => {
+        const stats = window.Cookiebot?.consent?.statistics === true;
+        onConsentChange(stats);
+      });
+
+      // Respond to explicit accept/decline
+      window.addEventListener('CookiebotOnAccept', () => {
+        const stats = window.Cookiebot?.consent?.statistics === true;
+        onConsentChange(stats);
+      });
+
+      window.addEventListener('CookiebotOnDecline', () => {
+        onConsentChange(false);
+      });
+    }
+  }
+
+  // ---- Tracking (single authority) ----
+
+  function track() {
+    if (consentState !== 'granted') return;
+    const url = location.href;
+    if (lastUrl === url) return;
+    lastUrl = url;
+
+    if (window._statcounter) {
+      _statcounter.record_pageview();
       return;
     }
 
-    window.sc_project = sc_project;
-    window.sc_security = sc_security;
-    window.sc_invisible = 1;
-    window.sc_https = 1;
+    Object.assign(window, {
+      sc_project,
+      sc_security,
+      sc_invisible: 1,
+      sc_https: 1,
+    });
 
-    const oldScript = document.getElementById('statcounter-script');
-    if (oldScript) oldScript.remove();
+    // dont re-add counter.js script if it exist
+    if (document.getElementById('statcounter-script')) return;
 
-    const script = document.createElement('script');
-    script.id = 'statcounter-script';
-    script.async = true;
-    script.src = "https://www.statcounter.com/counter/counter.js";
-    if (window.sc_project && window.sc_security) {
-      document.head.appendChild(script);
+    // dont add counter.js if the statcounter variables arent okay
+    if (!sc_project || !sc_security) {
+      console.warn("Statcounter missing variables.  Ensure `var sc_project` and `var sc_security` are both set with your project details.  The plugin will not run without them both in place.");
+      return;
     }
-  };
 
-  const adapter = CMP_ADAPTERS[CMP];
-
-if (!adapter) {
-  console.warn('[Statcounter] !adapter > Unsupported CMP :', CMP);
-} else {
-  adapter.setup(syncConsent);
-}
-
-function syncConsent(caller) {
-    console.log('syncConsent caller : ', caller)
-  const allowed = adapter.getAnalyticsConsent();
-
-  console.log('[Statcounter] syncConsent() :', allowed);
-
-  if (allowed) {
-      console.log(' >>> if (allowed) true');
-      isTrackingAuthorized = true;
-    track();
-  } else {
-      console.log(' >>> if (allowed) else > disableAnalytics()');
-      isTrackingAuthorized = false;
-  }
-}
-
-
-  // Listen for SPA Navigation
-  document.addEventListener('astro:page-load', () => {
-    console.log(' >>> astro:page-load triggered');
-    
-    if (isTrackingAuthorized) {
-      console.log(' >>> astro:page-load > isTrackingAuthorized');
-      track();
-    } else {
-      console.log(' >>> astro:page-load > SPA : isTrackingAuthorized else false.  manageConsent : false');
-    }
-  });
-
-  // 3. Initial execution for "Simple Mode"
-  if (!manageConsent) {
-    console.log(' >>> (!manageConsent) > Simple Mode: Firing initial track()');
-    track();
+    const s = document.createElement('script');
+    s.id = "statcounter-script";
+    s.async = true;
+    s.src = 'https://www.statcounter.com/counter/counter.js';
+    document.head.appendChild(s);
   }
 
+  document.addEventListener('astro:page-load', track);
+  track();
+
+  if (SIMPLE_MODE) track();
 })();
+
 </script>
