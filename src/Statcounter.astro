@@ -27,8 +27,7 @@ const {
 
 <script is:inline define:vars={{ sc_project, sc_security, sc_manageConsent, sc_CMP}}>
 (function () {
-  // const sc_CMP = 'cookiebot'; // 'vanillaJOP' | 'cookieyes' | 'cookiebot'
-  console.log(sc_CMP);
+
   const SIMPLE_MODE = !sc_manageConsent;
 
   let consentState = SIMPLE_MODE ? 'granted' : 'unknown';
@@ -39,11 +38,17 @@ const {
     if (allowed) track();
   }
 
-  // ---- sc_CMP wiring (input only, no side effects) ----
+  // ---- start CMP manageConsent ----
 
   if (sc_manageConsent) {
 
-    if (sc_CMP === 'vanillaJOP') {
+    const cmp =
+      typeof sc_CMP === 'string'
+        ? sc_CMP.toLowerCase()
+        : null;
+
+
+     if (cmp === 'vanillajop') {
       const handler = (e) => {
         const categories =
           e.detail?.cookie?.categories ??
@@ -51,42 +56,55 @@ const {
           [];
         onConsentChange(categories.includes('analytics'));
       };
-
-      window.addEventListener('cc:onChange', handler);
-      window.addEventListener('cc:onConsent', handler);
+      if (!window.__sc_consent_listening) {
+        window.__sc_consent_listening = true;
+        window.addEventListener('cc:onChange', handler);
+        window.addEventListener('cc:onConsent', handler);
+      }
     }
-
-    if (sc_CMP === 'cookieyes') {
+    
+    // CMP lifecycle events fire even when consent already exists
+    if (cmp === 'cookieyes') {
       const handler = () => {
         if (typeof window.getCkyConsent !== 'function') return;
         const consent = window.getCkyConsent();
         onConsentChange(consent?.categories?.analytics === true);
       };
-
-      document.addEventListener('cookieyes_consent_update', handler);
-      document.addEventListener('cookieyes_banner_load', handler);
+      if (!window.__sc_consent_listening) {
+        window.__sc_consent_listening = true;
+        document.addEventListener('cookieyes_consent_update', handler);
+        document.addEventListener('cookieyes_banner_load', handler);
+      }
     }
 
-     if (sc_CMP === 'cookiebot') {
+    // CMP lifecycle events fire even when consent already exists
+     if (cmp === 'cookiebot') {
       // Consent ready > read Cookiebot.consent
-      window.addEventListener('CookiebotOnConsentReady', () => {
-        const stats = window.Cookiebot?.consent?.statistics === true;
-        onConsentChange(stats);
-      });
 
-      // Respond to explicit accept/decline
-      window.addEventListener('CookiebotOnAccept', () => {
-        const stats = window.Cookiebot?.consent?.statistics === true;
-        onConsentChange(stats);
-      });
+      if (!window.__sc_consent_listening) {
+        window.__sc_consent_listening = true;
+        
+        window.addEventListener('CookiebotOnConsentReady', () => {
+          const stats = window.Cookiebot?.consent?.statistics === true;
+          onConsentChange(stats);
+        });
 
-      window.addEventListener('CookiebotOnDecline', () => {
-        onConsentChange(false);
-      });
+        // Respond to explicit accept/decline
+        window.addEventListener('CookiebotOnAccept', () => {
+          const stats = window.Cookiebot?.consent?.statistics === true;
+          onConsentChange(stats);
+        });
+
+        window.addEventListener('CookiebotOnDecline', () => {
+          onConsentChange(false);
+        });
+      }
     }
   }
 
-  // ---- Tracking (single authority) ----
+  // ---- end CMP manageConsent ----
+
+  // ---- start track ----
 
   function track() {
     if (consentState !== 'granted') return;
@@ -122,10 +140,15 @@ const {
     document.head.appendChild(s);
   }
 
+  // ---- end track ----
+
+  // ---- fire off pageload ----
+
   document.addEventListener('astro:page-load', track);
   track();
 
   if (SIMPLE_MODE) track();
+
 })();
 
 </script>

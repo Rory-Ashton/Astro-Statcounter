@@ -2,11 +2,13 @@
 set -e
 
 cd /var/www/html/astroStatcounter
-npm pack
+TARBALL=$(npm pack)
 
 cd /var/www/html/astro
-npm remove @statcounter/astro
-npm install /var/www/html/astroStatcounter/statcounter-astro-0.1.2.tgz
+npm remove @statcounter/astro || true
+rm -rf node_modules/@statcounter/astro
+
+npm install /var/www/html/astroStatcounter/$TARBALL
 
 npm run build
 pm2 restart astro
