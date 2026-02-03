@@ -1,14 +1,17 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
     "module": "ESNext",
-    "moduleResolution": "bundler",
-    "outDir": "dist",
-    "rootDir": "src",
-    "declaration": true,
+    "moduleResolution": "node",
+    "target": "ES2020",
+    "strict": true,
+    "esModuleInterop": true,
     "skipLibCheck": true,
-    "types": ["astro/client"]
+    "forceConsistentCasingInFileNames": true,
   },
-  "include": ["src"],
-  "exclude": ["node_modules", "dist", "scripts"]
+  "include": [
+    "src/Statcounter.astro",
+    "index.ts",
+    "index.d.ts",
+    "env.d.ts"
+  ]
 }

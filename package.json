@@ -2,35 +2,23 @@
   "name": "@statcounter/astro",
   "version": "0.1.1",
   "description": "Official Statcounter integration for Astro",
-  "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    },
-    "./package.json": "./package.json"
-  },
-  "files": [
-    "dist"
-  ],
-  "keywords": [
-    "astro",
-    "statcounter",
-    "analytics",
-    "astro-integration"
-  ],
-  "author": "Statcounter",
   "license": "MIT",
+  "type": "module",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": "./dist/Statcounter.astro"
+  },
+  "files": ["dist"],
+  "scripts": {
+    "type-check": "tsc --noEmit",
+    "prepublishOnly": "npm run type-check"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "astro": "^4.0.0"
+  },
   "peerDependencies": {
     "astro": "^4.0.0 || ^5.0.0"
   },
-  "publishConfig": {
-    "access": "public"
-  },
-  "scripts": {
-    "build": "tsc && node ./scripts/copy-astro.js",
-    "prepublishOnly": "npm run build"
-  }
+  "keywords": ["astro", "component", "analytics", "statcounter"]
 }
