@@ -1,1 +1,2 @@
-export { default as Statcounter } from './src/Statcounter.astro';
+import Statcounter from './src/Statcounter.astro';
+export default Statcounter;

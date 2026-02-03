@@ -4,14 +4,17 @@
   "description": "Official Statcounter integration for Astro",
   "license": "MIT",
   "type": "module",
-  "types": "./index.d.ts",
   "exports": {
-    ".": "./dist/Statcounter.astro"
-  },
+  ".": {
+    "types": "./dist/index.d.ts",
+    "default": "./dist/index.js"
+  }
+},
   "files": ["dist"],
   "scripts": {
+    "build": "rm -rf dist && tsc && cp src/Statcounter.astro dist/Statcounter.astro",
     "type-check": "tsc --noEmit",
-    "prepublishOnly": "npm run type-check"
+    "prepublishOnly": "npm run build"
   },
   "devDependencies": {
     "typescript": "^5.0.0",
