@@ -1,2 +1,2 @@
-import Statcounter from './src/Statcounter.astro';
+import Statcounter from './Statcounter.astro';
 export default Statcounter;
