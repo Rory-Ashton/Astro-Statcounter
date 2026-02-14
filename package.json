@@ -1,11 +1,11 @@
 {
   "name": "@statcounter/astro",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Official Statcounter integration for Astro",
   "homepage": "https://www.statcounter.com",
   "repository": {
-      "type": "git",
-      "url": "https://github.com/Rory-Ashton/Astro-Statcounter.git"
+    "type": "git",
+    "url": "https://github.com/Rory-Ashton/Astro-Statcounter.git"
   },
   "license": "MIT",
   "type": "module",
@@ -17,11 +17,13 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "clean": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\"", 
+    "clean": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\"",
     "build": "npm run clean && tsc && node -e \"require('fs').copyFileSync('src/Statcounter.astro', 'dist/Statcounter.astro')\"",
-    "prepack": "npm run build" 
+    "prepack": "npm run build"
   },
   "devDependencies": {
     "typescript": "^5.0.0",
@@ -30,5 +32,9 @@
   "peerDependencies": {
     "astro": "^4.0.0 || ^5.0.0"
   },
-  "keywords": ["astro", "analytics", "statcounter"]
+  "keywords": [
+    "astro",
+    "analytics",
+    "statcounter"
+  ]
 }
