@@ -2,6 +2,11 @@
   "name": "@statcounter/astro",
   "version": "0.1.1",
   "description": "Official Statcounter integration for Astro",
+  "homepage": "https://www.statcounter.com",
+  "repository": {
+      "type": "git",
+      "url": "https://github.com/Rory-Ashton/Astro-Statcounter.git"
+  },
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
