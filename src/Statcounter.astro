@@ -1,22 +1,4 @@
 ---
-interface Props {
-  sc_project: number;
-  sc_security: string;
-  sc_manageConsent?: boolean;
-  sc_CMP?: 'cookieyes' | 'vanillaJOP' | 'cookiebot';
-}
-
-declare global {
-  interface Window {
-    sc_project?: number;
-    sc_security?: string;
-    sc_invisible?: number;
-    sc_https?: number;
-    __sc_last_url?: string;
-    __sc_consent_listening?: boolean;
-  }
-}
-
 const {
   sc_project,
   sc_security,
@@ -28,11 +10,7 @@ const {
 <script is:inline define:vars={{ sc_project, sc_security, sc_manageConsent, sc_CMP}}>
 (function () {
 
-  const SIMPLE_MODE = !sc_manageConsent;
-
-  let consentState = SIMPLE_MODE ? 'granted' : 'unknown';
   let lastUrl;
-
   function onConsentChange(allowed) {
     consentState = allowed ? 'granted' : 'denied';
     if (allowed) track();
@@ -41,12 +19,18 @@ const {
   // ---- start CMP manageConsent ----
 
   if (sc_manageConsent) {
-
     const cmp =
       typeof sc_CMP === 'string'
         ? sc_CMP.toLowerCase()
         : null;
 
+    const VALID_CMPS = ["vanillajop", "cookieyes", "cookiebot"];
+
+    if (typeof cmp !== "string") {
+      console.warn(`[Statcounter] manageConsent is enabled but CMP is missing. Valid values: ${VALID_CMPS.join(", ")}`);
+    } else if (!VALID_CMPS.includes(cmp)) {
+      console.warn(`[Statcounter] manageConsent is enabled but CMP "${cmp}" is not recognized. Valid values: ${VALID_CMPS.join(", ")}`);
+    }
 
      if (cmp === 'vanillajop') {
       const handler = (e) => {
@@ -56,8 +40,12 @@ const {
           [];
         onConsentChange(categories.includes('analytics'));
       };
-      if (!window.__sc_consent_listening) {
-        window.__sc_consent_listening = true;
+
+      // cc:onChange fires on every pageload, everytime
+      // this is effectively checks the consent state
+      // even if was set previously
+      if (!window.__sc_consent_listening_vanillajop) {
+        window.__sc_consent_listening_vanillajop = true;
         window.addEventListener('cc:onChange', handler);
         window.addEventListener('cc:onConsent', handler);
       }
@@ -70,34 +58,34 @@ const {
         const consent = window.getCkyConsent();
         onConsentChange(consent?.categories?.analytics === true);
       };
-      if (!window.__sc_consent_listening) {
-        window.__sc_consent_listening = true;
+      if (!window.__sc_consent_listening_cookieyes) {
+        // Read current state for CookieYes in case the event happened already
+        handler();
+        window.__sc_consent_listening_cookieyes = true;
         document.addEventListener('cookieyes_consent_update', handler);
         document.addEventListener('cookieyes_banner_load', handler);
       }
     }
 
     // CMP lifecycle events fire even when consent already exists
-     if (cmp === 'cookiebot') {
-      // Consent ready > read Cookiebot.consent
+    if (cmp === "cookiebot") {
+      const read = () => {
+        const stats = window.Cookiebot?.consent?.statistics === true;
+        onConsentChange(stats);
+    };
 
-      if (!window.__sc_consent_listening) {
-        window.__sc_consent_listening = true;
-        
-        window.addEventListener('CookiebotOnConsentReady', () => {
-          const stats = window.Cookiebot?.consent?.statistics === true;
-          onConsentChange(stats);
-        });
+      if (!window.__sc_consent_listening_cookiebot) {
+        window.__sc_consent_listening_cookiebot = true;
 
-        // Respond to explicit accept/decline
-        window.addEventListener('CookiebotOnAccept', () => {
-          const stats = window.Cookiebot?.consent?.statistics === true;
-          onConsentChange(stats);
-        });
+        // If Cookiebot is already present, read "after the fact" immediately
+        if (window.Cookiebot?.consent) read();
 
-        window.addEventListener('CookiebotOnDecline', () => {
-          onConsentChange(false);
-        });
+        // Otherwise, wait for consent-ready (covers "loaded from existing cookie")
+        window.addEventListener("CookiebotOnConsentReady", read);
+
+        // Optional: still respond to explicit accept/decline
+        window.addEventListener("CookiebotOnAccept", read);
+        window.addEventListener("CookiebotOnDecline", () => onConsentChange(false));
       }
     }
   }
@@ -144,10 +132,12 @@ const {
 
   // ---- fire off pageload ----
 
-  document.addEventListener('astro:page-load', track);
+  if (!window.__sc_astro_listener_added) {
+    document.addEventListener('astro:page-load', track);
+    window.__sc_astro_listener_added = true;
+  }
+  
   track();
-
-  if (SIMPLE_MODE) track();
 
 })();
 
