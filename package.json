@@ -1,6 +1,6 @@
 {
   "name": "@statcounter/astro",
-  "version": "0.1.1",
+  "version": "0.1.0",
   "description": "Official Statcounter integration for Astro",
   "homepage": "https://www.statcounter.com",
   "repository": {
