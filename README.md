@@ -15,7 +15,7 @@ The official [Statcounter](https://statcounter.com/) integration for Astro.
 ## Features
 
 * **Astro View Transitions Ready**: Fully compatible with Astro's View Transitions API.
-* **Automatic Page Tracking**: Works with both static and SPA View Transitions-enabled sites.
+* **Automatic Page Tracking**: Works with both static and SPA sites.
 * **Lightweight**: Zero-dependency component with minimal impact on bundle size.
 * **Invisible**: Hardcoded to be hidden, ensuring your UI remains clean.
 * **Easy Setup**: Simple component-based installation.
@@ -44,7 +44,9 @@ import { Statcounter } from '@statcounter/astro';
 
 ### 2. Add the Component to Layout
 
-Place the ```<Statcounter />``` component inside your layout just before the closing ```</body>``` tag.  Replace the default values with your own statcounter project ID and security code.  You can get these from the Statcounter website by clicking your project name, clicking the gear icon in the lower left corner, click Settings, and scrolling down to the bottom.
+Place the ```<Statcounter />``` component inside your layout just before the closing ```</body>``` tag.  
+
+Replace the default values with your own statcounter project ID and security code.  You can get these from the Statcounter website by clicking your project name, clicking the gear icon in the lower left corner, click Settings, and scrolling down to the bottom.
 
 ```tsx
 <Statcounter sc_project={1234567} sc_security="abcdef12" sc_manageConsent={true} sc_CMP="cookieyes" />
@@ -58,44 +60,32 @@ If you are not using a Cookie Consent program you can use this shorter version
 
 ### Full Code Example
 
-**Example placement in `src/layouts/Layout.astro`**
+**example `src/layouts/Layout.astro`**
 
 ```tsx
 ---
-import { Statcounter } from '@statcounter/astro';
+import Statcounter from '@statcounter/astro';
 // ... other imports
 ---
 
 <!doctype html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<title>Astro Project</title>
-        </head>
-	<body>
-		<slot />
-        
-        <Statcounter sc_project={1234567} sc_security="abcdef12" sc_manageConsent={true} sc_CMP="cookieyes" />
-	</body>
+<head>
+<meta charset="UTF-8" />
+<title>Astro Project</title>
+</head>
+<body>
+<slot />
+<Statcounter sc_project={1234567} sc_security="abcdef12" sc_manageConsent={true} sc_CMP="cookieyes" />
+</body>
 </html>
 ```
 
 ### 3. Rebuild the site and restart the app
-If you are developing locally, stop your server and run:
-
-```bash
-npm run dev
-```
-
-If you are deploying to production, you must rebuild to see changes:
-
-```bash
-npm run build
-```
 
 ## Install Verification
 
-After you rebuild the site and restart the server, go to your site and open the browser console > Network tab and reload the page. You should see this activity in the Network tab.
+After you rebuild the site and restart the server, go to your site and open the browser console > Network tab and reload the page. You should see this activity in the Network tab. 
 
 ```counter.js
 
@@ -103,6 +93,8 @@ https://c.statcounter.com/t.php?sc_project=111111[...]
 ```
 
 If you are using View Transitions navigate to a few different pages to be sure the tracker fires on each route change.
+
+You should also see the statcounter code in the page -> view source.
 
 Note: If you do not see any network activity ensure your browser Adblocker is disabled as they often block analytics scripts.  You might need to do a hard refresh of the page or try adding a ?cache-buster=true string to the URL.
 
