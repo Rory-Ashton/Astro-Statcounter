@@ -11,6 +11,8 @@ const {
 (function () {
 
   let lastUrl;
+  let consentState = sc_manageConsent ? 'denied' : 'granted';
+
   function onConsentChange(allowed) {
     consentState = allowed ? 'granted' : 'denied';
     if (allowed) track();
@@ -27,7 +29,7 @@ const {
     const VALID_CMPS = ["vanillajop", "cookieyes", "cookiebot"];
 
     if (typeof cmp !== "string") {
-      console.warn(`[Statcounter] manageConsent is enabled but CMP is missing. Valid values: ${VALID_CMPS.join(", ")}`);
+      console.warn(`[Statcounter] manageConsent is enabled but CMP is missing eg. sc_CMP="vanillajop" Valid values: ${VALID_CMPS.join(", ")}`);
     } else if (!VALID_CMPS.includes(cmp)) {
       console.warn(`[Statcounter] manageConsent is enabled but CMP "${cmp}" is not recognized. Valid values: ${VALID_CMPS.join(", ")}`);
     }

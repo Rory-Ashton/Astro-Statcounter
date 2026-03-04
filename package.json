@@ -5,7 +5,7 @@
   "homepage": "https://www.statcounter.com",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Rory-Ashton/Astro-Statcounter.git"
+    "url": "git+https://github.com/Rory-Ashton/Astro-Statcounter.git"
   },
   "license": "MIT",
   "type": "module",
